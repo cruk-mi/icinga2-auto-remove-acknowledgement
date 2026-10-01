@@ -88,9 +88,9 @@ The example event command calls the plugin directly. If your deployment requires
 
 See `SECURITY.md` for reporting security issues.
 
-## Contributing
+## Licence
+GPL v3
 
-Issues and pull requests are welcome. See `CONTRIBUTING.md`.
 
 ## Disclaimer
 
