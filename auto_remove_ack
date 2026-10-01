@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -u
+
+LOGFILE="${LOGFILE:-/var/log/messages}"
+STATE_DIR="${STATE_DIR:-/var/lib/icinga2/output_tracking}"
+APIUSER="${APIUSER:-yourapiusername}"
+APIPASS="${APIPASS:-yourapipass}"
+APIURL="${APIURL:-https://your.icinga2.server.local:5665}"
+TAG="autoRemoveAck"
+
+log() { printf '%s %s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$TAG" "$*" >> "$LOGFILE"; }
+
+HOST=""; SERVICE=""; STATE=""; STATE_ID=""; OUTPUT=""; ACK=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --host|--service|--state|--state_id|--output|--ack)
+      [[ $# -ge 2 ]] || { log "missing value for $1"; exit 3; }
+      case "$1" in
+        --host) HOST="$2";; --service) SERVICE="$2";; --state) STATE="$2";;
+        --state_id) STATE_ID="$2";; --output) OUTPUT="$2";; --ack) ACK="$2";;
+      esac
+      shift 2;;
+    *) log "ignoring unknown argument: $1"; shift;;
+  esac
+done
+
+if [[ -z "$HOST" || -z "$SERVICE" || -z "$STATE" || -z "$ACK" ]]; then
+  log "required arguments missing"
+  exit 3
+fi
+
+install -d -m 0750 "$STATE_DIR" || exit 3
+SAFE_HOST=$(printf '%s' "$HOST" | tr -c '[:alnum:]_.-' '_')
+SAFE_SERVICE=$(printf '%s' "$SERVICE" | tr -c '[:alnum:]_.-' '_')
+FILE="${STATE_DIR}/${SAFE_HOST}_${SAFE_SERVICE}.last"
+
+remove_state_file() {
+  if [[ -f "$FILE" ]]; then
+    rm -f -- "$FILE"
+    log "state=$STATE (state_id=$STATE_ID), removed tracking file $FILE"
+  fi
+}
+
+log "host=$HOST service=$SERVICE state=$STATE state_id=$STATE_ID ack=$ACK"
+
+if [[ "$STATE" == "OK" ]]; then
+  remove_state_file
+  exit 0
+fi
+
+if [[ "$ACK" == "0" ]]; then
+  log "service $SERVICE on $HOST is not acknowledged"
+  remove_state_file
+  exit 0
+fi
+
+PREV_OUTPUT=""; PREV_TIME=""
+if [[ -f "$FILE" ]]; then
+  PREV_OUTPUT=$(cat -- "$FILE")
+  PREV_TIME=$(date -d "$(stat -c %z -- "$FILE")" '+%Y-%m-%d %H:%M:%S')
+fi
+printf '%s\n' "$OUTPUT" > "$FILE"
+
+if [[ -z "$PREV_OUTPUT" ]]; then
+  log "first observation after acknowledgement"
+  exit 0
+fi
+if [[ "$PREV_OUTPUT" == "$OUTPUT" ]]; then
+  log "output unchanged since $PREV_TIME"
+  exit 0
+fi
+
+log "output changed since $PREV_TIME; requesting acknowledgement removal"
+JSON=$(python3 -c 'import json,sys; h,s=sys.argv[1:3]; print(json.dumps({"type":"Service","filter":f"host.name=={json.dumps(h)} && service.name=={json.dumps(s)}"}))' "$HOST" "$SERVICE") || exit 3
+RESPONSE=$(curl --silent --show-error --fail \
+  --user "${APIUSER}:${APIPASS}" \
+  --header 'Accept: application/json' \
+  --header 'Content-Type: application/json' \
+  --request POST \
+  "${APIURL}/v1/actions/remove-acknowledgement" \
+  --data "$JSON" 2>&1)
+RC=$?
+log "remove-ack response: $RESPONSE"
+if [[ $RC -eq 0 ]]; then
+  remove_state_file
+  exit 0
+fi
+log "API request failed with curl exit code $RC; retaining tracking file"
+exit 3
