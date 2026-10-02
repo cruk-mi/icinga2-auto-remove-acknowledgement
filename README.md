@@ -5,6 +5,17 @@ An Icinga 2 event-command helper that automatically removes a **service acknowle
 
 This is useful for services where changed output represents a new or materially different problem that should be reviewed and acknowledged again. The supplied service example uses `volatile = true` so that the event command runs for each non-OK check result.
 
+##Topics
+
+icinga2
+icinga
+icinga-plugin
+monitoring
+nagios
+acknowledgement
+event-command
+monitoring-plugin
+
 ## Behaviour
 
 1. When an acknowledged, non-OK service is first observed, the current plugin output is stored.
