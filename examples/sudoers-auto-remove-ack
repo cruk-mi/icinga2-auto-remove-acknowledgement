@@ -1,0 +1,2 @@
+# Validate with: visudo -cf /etc/sudoers.d/auto-remove-ack
+icinga ALL=(root) NOPASSWD: /usr/lib64/nagios/plugins/auto_remove_ack

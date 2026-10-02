@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-set -u
+#set -u
+
+#initial release 20261001
+#v0.1
 
 LOGFILE="${LOGFILE:-/var/log/messages}"
 STATE_DIR="${STATE_DIR:-/var/lib/icinga2/output_tracking}"
