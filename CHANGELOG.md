@@ -1,11 +1,12 @@
 # Changelog
 
-All notable changes will be documented in this file.
+## v0.1
 
-## [Unreleased]
+Initial public release
 
-### Added
-- Initial public project structure.
-- Output tracking for acknowledged, non-OK services.
-- Automatic acknowledgement removal when plugin output changes.
-- Example Icinga event command, service, API user, and sudoers configuration.
+### Features
+
+- Automatically removes service acknowledgements when plugin output changes
+- Uses Icinga 2 REST API
+- Supports volatile services
+- Plugin output tracking via local state files
