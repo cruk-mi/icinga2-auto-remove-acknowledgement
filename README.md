@@ -5,6 +5,10 @@ An Icinga 2 event-command helper that automatically removes a **service acknowle
 
 This is useful for services where changed output represents a new or materially different problem that should be reviewed and acknowledged again. The supplied service example uses `volatile = true` so that the event command runs for each non-OK check result.
 
+##Use case
+
+You acknowledge a CRITICAL service because you are dealing with it. The service remains CRITICAL, but later the plugin output changes because the underlying problem has changed. Normally the acknowledgement remains. This plugin automatically removes the acknowledgement so the new condition can be reviewed and notified again.
+
 ##Topics
 
 icinga2
