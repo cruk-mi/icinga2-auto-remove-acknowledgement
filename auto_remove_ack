@@ -3,6 +3,7 @@
 
 #initial release 20261001
 #v0.1
+#zhicheng.wang@cruk.manchester.ac.uk
 
 LOGFILE="${LOGFILE:-/var/log/messages}"
 STATE_DIR="${STATE_DIR:-/var/lib/icinga2/output_tracking}"
